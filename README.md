@@ -7,7 +7,7 @@ You can easily disable this function by writing this line: ```ParticleReplacer.f
 The manager also has documentation for each function and each variable used there. To see it, you need to add ```ParticleReplacerManager.pdb``` and ```ParticleReplacerManager.xml``` files to your project.
 
 ### Merging the DLLs into your mod
-Download the ParticleReplacer.dll from the release section to the right. Including the DLLs is best done via ILRepack (https://github.com/ravibpatel/ILRepack.Lib.MSBuild.Task). You can load this package (ILRepack.Lib.MSBuild.Task) from NuGet.
+Download the ParticleReplacerManager.dll from the release section to the right. Including the DLLs is best done via ILRepack (https://github.com/ravibpatel/ILRepack.Lib.MSBuild.Task). You can load this package (ILRepack.Lib.MSBuild.Task) from NuGet.
 
 If you have installed ILRepack via NuGet, simply create a file named ILRepack.targets in your project and copy the following content into the file
 
@@ -17,14 +17,14 @@ If you have installed ILRepack via NuGet, simply create a file named ILRepack.ta
     <Target Name="ILRepacker" AfterTargets="Build">
         <ItemGroup>
             <InputAssemblies Include="$(TargetPath)" />
-            <InputAssemblies Include="$(OutputPath)\ParticleReplacer.dll" />
+            <InputAssemblies Include="$(OutputPath)\ParticleReplacerManager.dll" />
         </ItemGroup>
         <ILRepack Parallel="true" DebugInfo="true" Internalize="true" InputAssemblies="@(InputAssemblies)" OutputFile="$(TargetPath)" TargetKind="SameAsPrimaryAssembly" LibraryPath="$(OutputPath)" />
     </Target>
 </Project>
 ```
 
-Make sure to set the ParticleReplacer.dll in your project to "Copy to output directory" in the properties of the DLLs and to add a reference to it. 
+Make sure to set the ParticleReplacerManager.dll in your project to "Copy to output directory" in the properties of the DLLs and to add a reference to it. 
 After that, simply add ```using ParticleReplacerManager;``` to your mod and use the ```ParticleReplacer``` class, to fix your particles.
 
 ### Example project
