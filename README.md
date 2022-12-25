@@ -55,8 +55,10 @@ namespace KilnReimagined
             piece.RequiredItems.Add("SurtlingCore", 5, true);
             piece.Crafting.Set(CraftingTable.Workbench);
             piece.Category.Add(BuildPieceCategory.Crafting);
-
             MaterialReplacer.RegisterGameObjectForShaderSwap(piece.Prefab, MaterialReplacer.ShaderType.UseUnityShader);
+
+            ParticleReplacer.fixSmoke = false;
+
             ParticleReplacer.RegisterParticleSystemForShaderSwap(
                 piece.Prefab, //Prefab of a ParticleSystem or any other prefab having them inside itself.
                 ParticleReplacer.ShaderType.LitParticles, //The shader to be applied to the material of the particles.
@@ -66,6 +68,11 @@ namespace KilnReimagined
             ParticleReplacer.RegisterParticleSystemForShaderSwap(piece.Prefab, ParticleReplacer.ShaderType.LitParticles, "_enabled/smok_small");
             ParticleReplacer.RegisterParticleSystemForShaderSwap(piece.Prefab, ParticleReplacer.ShaderType.LitParticles, "_enabled/smok_small (1)");
             ParticleReplacer.RegisterParticleSystemForShaderSwap(piece.Prefab, ParticleReplacer.ShaderType.LitParticles, "_enabled/flare");
+
+            ParticleReplacer.RegisterParticleSystemForShaderSwap(
+            "kiln", //The name of the AssetBundle inside which the effect prefab is located.
+            "SomeCustomEffect", //The name of the effect prefab, inside the AssetBundle.
+                ParticleReplacer.ShaderType.LitParticles); //The shader to be applied to the material of the particles.
             harmony.PatchAll();
         }
 
