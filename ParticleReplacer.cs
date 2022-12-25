@@ -158,6 +158,7 @@ namespace ParticleReplacerManager
                     {
                         ShaderType.AlphaParticle => Shader.Find("Custom/AlphaParticle"),
                         ShaderType.LitParticles => Shader.Find("Custom/LitParticles"),
+                        ShaderType.ShadowBlob => Shader.Find("Custom/ShadowBlob"),
                         ShaderType.ParticleDecal => Shader.Find("Custom/ParticleDecal"),
                         ShaderType.LuxLitParticlesBumped => Shader.Find("LuxLitParticles/Bumped"),
                         ShaderType.UseUnityShader => Shader.Find(name),
