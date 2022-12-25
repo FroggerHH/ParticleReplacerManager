@@ -5,6 +5,7 @@ Allows you to easily fix the shaders of particle systems.<br>
 It also automatically repairs the smoke shader by setting the shader of all objects using the Smoke.cs script to Custom/Lit.<br>
 You can easily disable this function by writing this line: ```ParticleReplacer.fixSmoke = false;```<br>
 The manager also has documentation for each function and each variable used there. To see it, you need to add ```ParticleReplacerManager.pdb``` and ```ParticleReplacerManager.xml``` files to your project.
+![example](images/exaple.png)
 
 ### Merging the DLLs into your mod
 Download the ParticleReplacerManager.dll from the release section to the right. Including the DLLs is best done via ILRepack (https://github.com/ravibpatel/ILRepack.Lib.MSBuild.Task). You can load this package (ILRepack.Lib.MSBuild.Task) from NuGet.
