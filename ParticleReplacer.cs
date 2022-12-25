@@ -177,6 +177,7 @@ namespace ParticleReplacerManager
             AlphaParticle,
             LitParticles,
             ParticleDecal,
+            ShadowBlob,
             LuxLitParticlesBumped,
             LuxLitParticlesTessBumped,
             UseUnityShader
