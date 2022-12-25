@@ -9,6 +9,7 @@ using UnityEngine.SceneManagement;
 #nullable enable
 
 #pragma warning disable CS1591
+#pragma warning disable CS8604
 namespace ParticleReplacerManager
 {
     public static class ParticleReplacer
@@ -58,7 +59,13 @@ namespace ParticleReplacerManager
         /// Example: "_enabled/flames". </param> 
         public static void RegisterParticleSystemForShaderSwap(string assetBundleName, string prefabName, ShaderType shaderType, string transformPath = "this object", string folderName = "assets")
         {
-            RegisterParticleSystemForShaderSwap(RegisterPrefab(assetBundleName, prefabName, folderName), shaderType, transformPath);
+            GameObject? go = RegisterPrefab(assetBundleName, prefabName, folderName);
+            if(!go)
+            {
+                Debug.LogError($"Can't find GameObject with name {prefabName}. AssetBundle {assetBundleName} exists, but it doesn't have {prefabName} in it. Perhaps this is an automatically added prefab, in which case you need to manually add it to the AssetBundle.");
+                return;
+            }
+            RegisterParticleSystemForShaderSwap(go, shaderType, transformPath);
         }
         /// <summary>
         /// Registration of the prefab of the particle system (the particle system inside it)  to replace the material shader. 
@@ -95,13 +102,20 @@ namespace ParticleReplacerManager
             [UsedImplicitly] public string folderName;
         }
         private static readonly Dictionary<BundleId, AssetBundle> bundleCache = new();
-        private static GameObject RegisterPrefab(string assetBundleFileName, string prefabName, string folderName = "assets")
+        private static GameObject? RegisterPrefab(string assetBundleFileName, string prefabName, string folderName = "assets")
         {
-            return RegisterPrefab(RegisterAssetBundle(assetBundleFileName, folderName), prefabName);
+            AssetBundle assets = RegisterAssetBundle(assetBundleFileName, folderName);
+            if(!assets)
+            {
+                Debug.LogError($"Can't find AssetBundle with name {assetBundleFileName}.");
+                return null;
+            }
+            return RegisterPrefab(assets, prefabName);
         }
-        private static GameObject RegisterPrefab(AssetBundle assets, string prefabName)
+        private static GameObject? RegisterPrefab(AssetBundle assets, string prefabName)
         {
-            return assets.LoadAsset<GameObject>(prefabName);
+            GameObject gameObject = assets.LoadAsset<GameObject>(prefabName);
+            return gameObject;
         }
 
         [HarmonyPriority(Priority.VeryHigh)]
