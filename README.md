@@ -1,4 +1,5 @@
 # ParticleReplacerManager
+![GitHub all releases](https://img.shields.io/github/downloads/froggerhh/ParticleReplacerManager/total?color=green&style=plastic)
  Just a Frogger manager that easily solves problems with particle materials
 
 Allows you to easily fix the shaders of particle systems.<br>
