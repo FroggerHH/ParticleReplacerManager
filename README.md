@@ -1,7 +1,8 @@
 # ParticleReplacerManager
 
 [![Github All Releases](https://img.shields.io/github/downloads/FroggerHH/ParticleReplacerManager/total.svg)]()
- Just a Frogger manager that easily solves problems with particle materials
+
+Just a Frogger manager that easily solves problems with particle materials
 
 Allows you to easily fix the shaders of particle systems.<br>
 It also automatically repairs the smoke shader by setting the shader of all objects using the Smoke.cs script to Custom/Lit.<br>
