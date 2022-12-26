@@ -91,6 +91,10 @@ namespace ParticleReplacerManager
         {
             RegisterParticleSystemForShaderSwap(RegisterPrefab(assetBundle, prefabName), shaderType, transformPath);
         }
+        /// <summary>
+        /// Registration of the prefab of the ship to replace particles in it.
+        /// </summary>
+        /// <param name="gameObject"> Prefab of a ship. </param>
         public static void FixShip(GameObject gameObject)
         {
             _ships.Add(gameObject);
