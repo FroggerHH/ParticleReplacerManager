@@ -33,8 +33,20 @@ Make sure to set the ParticleReplacerManager.dll in your project to "Copy to out
 After that, simply add ```using ParticleReplacerManager;``` to your mod and use the ```ParticleReplacer``` class, to fix your particles.
 
 ### Example project
-This adds new kiln and fixing its particles.
+This adds new kiln and ship and fixing their particles.<br>
 
+When usinng ```ParticleReplacer.FixShip``` you must be shour that your ships particles are named as same as Karve ones:<br>
+* watermask_waternmask
+* vfx_water_surface
+* front_particles
+* alt_particles
+* Trail
+* RightSplash
+* LeftSplash
+* rudder
+
+If some of them are named incorrectly, they will not be corrected.
+<br><br>
 ```csharp
 using BepInEx;
 using HarmonyLib;

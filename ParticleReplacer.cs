@@ -215,16 +215,20 @@ namespace ParticleReplacerManager
         private static void FixShipsPatch()
         {
             GameObject karve = ZNetScene.instance.GetPrefab("Karve");
+            GameObject vikingShip = ZNetScene.instance.GetPrefab("Karve");
             Ship karveShip = karve.GetComponent<Ship>();
             Piece karvePiece = karve.GetComponent<Piece>();
+            WaterTrigger? karveWaterTrigger = Utils.FindChild(karve.transform, "vfx_water_surface")?.GetComponent<WaterTrigger>();
             ParticleSystemRenderer? karveVfx_water_surface = Utils.FindChild(karve.transform, "vfx_water_surface")?.GetComponent<ParticleSystemRenderer>();
             ParticleSystemRenderer? karveFront_particles = Utils.FindChild(karve.transform, "front_particles")?.GetComponent<ParticleSystemRenderer>();
+            ParticleSystemRenderer? vikingShipAlt_particles = Utils.FindChild(vikingShip.transform, "alt_particles")?.GetComponent<ParticleSystemRenderer>();
             ParticleSystemRenderer? karveTrail = Utils.FindChild(karve.transform, "Trail")?.GetComponent<ParticleSystemRenderer>();
             ParticleSystemRenderer? karveRightSplash = Utils.FindChild(karve.transform, "RightSplash")?.GetComponent<ParticleSystemRenderer>();
             ParticleSystemRenderer? karveLeftSplash = Utils.FindChild(karve.transform, "LeftSplash")?.GetComponent<ParticleSystemRenderer>();
             ParticleSystemRenderer? karveRudder = Utils.FindChild(karve.transform, "rudder")?.GetComponent<ParticleSystemRenderer>();
             ParticleSystemRenderer? karveVfx_WaterImpact = null;
             ParticleSystemRenderer? karveVfx_Place = null;
+            ParticleSystemRenderer? karveVfx_watersplash = null;
             for(int i = 0; i < karveShip.m_waterImpactEffect.m_effectPrefabs.Length; i++)
             {
                 if(karveShip.m_waterImpactEffect.m_effectPrefabs[i].m_prefab.TryGetComponent(out ParticleSystemRenderer karveVfx_WaterImpact1))
@@ -235,6 +239,11 @@ namespace ParticleReplacerManager
                 if(karvePiece.m_placeEffect.m_effectPrefabs[i].m_prefab.TryGetComponent(out ParticleSystemRenderer karveVfx_Place1))
                     karveVfx_Place = karveVfx_Place1;
             }
+            for(int i = 0; i < karveWaterTrigger?.m_effects.m_effectPrefabs.Length; i++)
+            {
+                if(karveWaterTrigger.m_effects.m_effectPrefabs[i].m_prefab.TryGetComponent(out ParticleSystemRenderer vfx_watersplash1))
+                    karveVfx_watersplash = vfx_watersplash1;
+            }
 
             for(int i = 0; i < ships.Count; i++)
             {
@@ -242,14 +251,17 @@ namespace ParticleReplacerManager
                 Ship currentShipShipCmp = currentShip.GetComponent<Ship>();
                 Piece currentShipPiece = currentShip.GetComponent<Piece>();
                 MeshRenderer? waternmask = Utils.FindChild(currentShip.transform, "watermask_waternmask")?.GetComponent<MeshRenderer>();
+                WaterTrigger? waterTrigger = Utils.FindChild(currentShip.transform, "vfx_water_surface")?.GetComponent<WaterTrigger>();
                 ParticleSystemRenderer? vfx_water_surface = Utils.FindChild(currentShip.transform, "vfx_water_surface")?.GetComponent<ParticleSystemRenderer>();
                 ParticleSystemRenderer? front_particles = Utils.FindChild(currentShip.transform, "front_particles")?.GetComponent<ParticleSystemRenderer>();
+                ParticleSystemRenderer? alt_particles = Utils.FindChild(currentShip.transform, "alt_particles")?.GetComponent<ParticleSystemRenderer>();
                 ParticleSystemRenderer? trail = Utils.FindChild(currentShip.transform, "Trail")?.GetComponent<ParticleSystemRenderer>();
                 ParticleSystemRenderer? rightSplash = Utils.FindChild(currentShip.transform, "RightSplash")?.GetComponent<ParticleSystemRenderer>();
                 ParticleSystemRenderer? leftSplash = Utils.FindChild(currentShip.transform, "LeftSplash")?.GetComponent<ParticleSystemRenderer>();
                 ParticleSystemRenderer? rudder = Utils.FindChild(currentShip.transform, "rudder")?.GetComponent<ParticleSystemRenderer>();
                 ParticleSystemRenderer? vfx_WaterImpact = null;
                 ParticleSystemRenderer? vfx_Place = null;
+                ParticleSystemRenderer? vfx_watersplash = null;
                 for(int ii = 0; ii < currentShipShipCmp.m_waterImpactEffect.m_effectPrefabs.Length; ii++)
                 {
                     if(currentShipShipCmp.m_waterImpactEffect.m_effectPrefabs[ii].m_prefab.TryGetComponent(out ParticleSystemRenderer vfx_WaterImpact1))
@@ -259,6 +271,11 @@ namespace ParticleReplacerManager
                 {
                     if(currentShipPiece.m_placeEffect.m_effectPrefabs[ii].m_prefab.TryGetComponent(out ParticleSystemRenderer vfx_Place1))
                         vfx_Place = vfx_Place1;
+                }
+                for(int ii = 0; ii < waterTrigger?.m_effects.m_effectPrefabs.Length; ii++)
+                {
+                    if(waterTrigger.m_effects.m_effectPrefabs[ii].m_prefab.TryGetComponent(out ParticleSystemRenderer vfx_watersplash1))
+                        vfx_watersplash = vfx_watersplash1;
                 }
 
 #pragma warning disable CS8602
@@ -300,12 +317,22 @@ namespace ParticleReplacerManager
                 if(vfx_WaterImpact && karveVfx_WaterImpact)
                 {
                     vfx_WaterImpact.materials = karveVfx_WaterImpact.materials;
-                    Debug.Log($"Fixing vfx_WaterImpact in {currentShip.name}");
+                    if(ShipFixingDebuging) Debug.Log($"Fixing vfx_WaterImpact in {currentShip.name}");
                 }
                 if(vfx_Place && karveVfx_Place)
                 {
                     vfx_Place.materials = karveVfx_Place.materials;
-                    if(ShipFixingDebuging) Debug.Log($"Fixingv fx_Place in {currentShip.name}");
+                    if(ShipFixingDebuging) Debug.Log($"Fixing vfx_Place in {currentShip.name}");
+                }
+                if(alt_particles && vikingShipAlt_particles)
+                {
+                    alt_particles.materials = vikingShipAlt_particles.materials;
+                    if(ShipFixingDebuging) Debug.Log($"Fixing alt_particles in {currentShip.name}");
+                }
+                if(vfx_watersplash && karveVfx_watersplash)
+                {
+                    vfx_watersplash.materials = karveVfx_watersplash.materials;
+                    if(ShipFixingDebuging) Debug.Log($"Fixing vfx_watersplash in {currentShip.name}");
                 }
 #pragma warning restore CS8602
             }
