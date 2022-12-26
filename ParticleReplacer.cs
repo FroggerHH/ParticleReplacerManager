@@ -17,7 +17,6 @@ namespace ParticleReplacerManager
         /// Whether to change the shredder of ALL smoke particles to Custom/LitParticles.
         /// </summary>
         public static bool FixSmoke = true;
-
         /// <summary>
         /// Whether to debug full stack of fixing ships particles materials.
         /// </summary>
@@ -25,8 +24,7 @@ namespace ParticleReplacerManager
 
         static ParticleReplacer()
         {
-            _objectsForShaderReplace = new();
-            originalMaterials = new();
+            objectsForShaderReplace = new();
             Harmony harmony = new("org.bepinex.helpers.ParticleReplacer");
             harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)),
                 prefix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(ParticleReplacer),
@@ -39,9 +37,8 @@ namespace ParticleReplacerManager
                     nameof(SmokeFix))));
         }
 
-        private static readonly List<GOSnapData> _objectsForShaderReplace;
-        internal static Dictionary<string, Material> originalMaterials;
-        internal static List<GameObject> _ships = new();
+        private static readonly List<GOSnapData> objectsForShaderReplace;
+        internal static List<GameObject> ships = new();
 
         /// <summary>
         /// Registration of the prefab of the particle system/particle system inside it to replace the material shader.
@@ -53,7 +50,7 @@ namespace ParticleReplacerManager
         /// Example: "_enabled/flames". </param>
         public static void RegisterParticleSystemForShaderSwap(GameObject go, ShaderType shaderType, string transformPath = "this object")
         {
-            _objectsForShaderReplace?.Add(new() { gameObject = go, shader = shaderType, transformPath = transformPath });
+            objectsForShaderReplace?.Add(new() { gameObject = go, shader = shaderType, transformPath = transformPath });
         }
         /// <summary>
         /// Registration of the prefab of the particle system (the particle system inside it)  to replace the material shader. 
@@ -97,17 +94,9 @@ namespace ParticleReplacerManager
         /// <param name="gameObject"> Prefab of a ship. </param>
         public static void FixShip(GameObject gameObject)
         {
-            _ships.Add(gameObject);
+            ships.Add(gameObject);
         }
 
-        private static void GetAllMaterials()
-        {
-            Material[]? allmats = Resources.FindObjectsOfTypeAll<Material>();
-            foreach(Material? item in allmats)
-            {
-                originalMaterials[item.name] = item;
-            }
-        }
         private static AssetBundle RegisterAssetBundle(string assetBundleFileName, string folderName = "assets")
         {
             BundleId id = new() { assetBundleFileName = assetBundleFileName, folderName = folderName };
@@ -149,9 +138,7 @@ namespace ParticleReplacerManager
         {
             if(SceneManager.GetActiveScene().name != "start") return;
 
-            if(originalMaterials.Count <= 0) GetAllMaterials();
-
-            foreach(GOSnapData? gOSnapData in _objectsForShaderReplace)
+            foreach(GOSnapData? gOSnapData in objectsForShaderReplace)
             {
                 if(gOSnapData.gameObject == null)
                 {
@@ -249,9 +236,9 @@ namespace ParticleReplacerManager
                     karveVfx_Place = karveVfx_Place1;
             }
 
-            for(int i = 0; i < _ships.Count; i++)
+            for(int i = 0; i < ships.Count; i++)
             {
-                GameObject currentShip = _ships[i];
+                GameObject currentShip = ships[i];
                 Ship currentShipShipCmp = currentShip.GetComponent<Ship>();
                 Piece currentShipPiece = currentShip.GetComponent<Piece>();
                 MeshRenderer? waternmask = Utils.FindChild(currentShip.transform, "watermask_waternmask")?.GetComponent<MeshRenderer>();
@@ -323,7 +310,6 @@ namespace ParticleReplacerManager
 #pragma warning restore CS8602
             }
         }
-
 
         [HarmonyPriority(Priority.VeryHigh)]
         private static void SmokeFix(Smoke __instance)
