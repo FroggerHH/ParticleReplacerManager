@@ -7,7 +7,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 #nullable enable
-
 #pragma warning disable CS1591
 #pragma warning disable CS8604
 namespace ParticleReplacerManager
@@ -17,21 +16,32 @@ namespace ParticleReplacerManager
         /// <summary>
         /// Whether to change the shredder of ALL smoke particles to Custom/LitParticles.
         /// </summary>
-        public static bool fixSmoke = true;
+        public static bool FixSmoke = true;
+
+        /// <summary>
+        /// Whether to debug full stack of fixing ships particles materials.
+        /// </summary>
+        public static bool ShipFixingDebuging = false;
 
         static ParticleReplacer()
         {
             _objectsForShaderReplace = new();
+            originalMaterials = new();
             Harmony harmony = new("org.bepinex.helpers.ParticleReplacer");
             harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)),
                 prefix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(ParticleReplacer),
                     nameof(ReplaceAllMaterialsWithOriginal))));
+            harmony.Patch(AccessTools.DeclaredMethod(typeof(ZoneSystem), nameof(ZoneSystem.Start)),
+                postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(ParticleReplacer),
+                    nameof(FixShipsPatch))));
             harmony.Patch(AccessTools.DeclaredMethod(typeof(Smoke), nameof(Smoke.Awake)),
                 postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(ParticleReplacer),
                     nameof(SmokeFix))));
         }
 
         private static readonly List<GOSnapData> _objectsForShaderReplace;
+        internal static Dictionary<string, Material> originalMaterials;
+        internal static List<GameObject> _ships = new();
 
         /// <summary>
         /// Registration of the prefab of the particle system/particle system inside it to replace the material shader.
@@ -81,7 +91,19 @@ namespace ParticleReplacerManager
         {
             RegisterParticleSystemForShaderSwap(RegisterPrefab(assetBundle, prefabName), shaderType, transformPath);
         }
+        public static void FixShip(GameObject gameObject)
+        {
+            _ships.Add(gameObject);
+        }
 
+        private static void GetAllMaterials()
+        {
+            Material[]? allmats = Resources.FindObjectsOfTypeAll<Material>();
+            foreach(Material? item in allmats)
+            {
+                originalMaterials[item.name] = item;
+            }
+        }
         private static AssetBundle RegisterAssetBundle(string assetBundleFileName, string folderName = "assets")
         {
             BundleId id = new() { assetBundleFileName = assetBundleFileName, folderName = folderName };
@@ -122,6 +144,9 @@ namespace ParticleReplacerManager
         private static void ReplaceAllMaterialsWithOriginal()
         {
             if(SceneManager.GetActiveScene().name != "start") return;
+
+            if(originalMaterials.Count <= 0) GetAllMaterials();
+
             foreach(GOSnapData? gOSnapData in _objectsForShaderReplace)
             {
                 if(gOSnapData.gameObject == null)
@@ -151,26 +176,155 @@ namespace ParticleReplacerManager
                 }
 
                 ShaderType shaderType = gOSnapData.shader;
-                foreach(Material? t in particleSystem.materials)
+
+                switch(shaderType)
                 {
-                    string name = t.shader.name;
-                    t.shader = shaderType switch
-                    {
-                        ShaderType.AlphaParticle => Shader.Find("Custom/AlphaParticle"),
-                        ShaderType.LitParticles => Shader.Find("Custom/LitParticles"),
-                        ShaderType.ShadowBlob => Shader.Find("Custom/ShadowBlob"),
-                        ShaderType.ParticleDecal => Shader.Find("Custom/ParticleDecal"),
-                        ShaderType.LuxLitParticlesBumped => Shader.Find("LuxLitParticles/Bumped"),
-                        ShaderType.UseUnityShader => Shader.Find(name),
-                        _ => Shader.Find("Custom/LitParticles"),
-                    };
+                    case ShaderType.AlphaParticle:
+                        foreach(Material? t in particleSystem.materials)
+                        {
+                            t.shader = Shader.Find("Custom/AlphaParticle");
+                        }
+                        break;
+                    case ShaderType.LitParticles:
+                        foreach(Material? t in particleSystem.materials)
+                        {
+                            t.shader = Shader.Find("Custom/LitParticles");
+                        }
+                        break;
+                    case ShaderType.ParticleDecal:
+                        foreach(Material? t in particleSystem.materials)
+                        {
+                            t.shader = Shader.Find("Custom/ParticleDecal");
+                        }
+                        break;
+                    case ShaderType.LuxLitParticlesBumped:
+                        foreach(Material? t in particleSystem.materials)
+                        {
+                            t.shader = Shader.Find("LuxLitParticles/Bumped");
+                        }
+                        break;
+                    case ShaderType.UseUnityShader:
+                        foreach(Material? t in particleSystem.materials)
+                        {
+                            string name = t.shader.name;
+                            t.shader = Shader.Find(name);
+                        }
+                        break;
+                    default:
+                        foreach(Material? t in particleSystem.materials)
+                        {
+                            t.shader = Shader.Find("Custom/LitParticles");
+                        }
+                        break;
                 }
             }
         }
+
+        [HarmonyPriority(Priority.VeryHigh)]
+        private static void FixShipsPatch()
+        {
+            GameObject karve = ZNetScene.instance.GetPrefab("Karve");
+            Ship karveShip = karve.GetComponent<Ship>();
+            Piece karvePiece = karve.GetComponent<Piece>();
+            ParticleSystemRenderer? karveVfx_water_surface = Utils.FindChild(karve.transform, "vfx_water_surface")?.GetComponent<ParticleSystemRenderer>();
+            ParticleSystemRenderer? karveFront_particles = Utils.FindChild(karve.transform, "front_particles")?.GetComponent<ParticleSystemRenderer>();
+            ParticleSystemRenderer? karveTrail = Utils.FindChild(karve.transform, "Trail")?.GetComponent<ParticleSystemRenderer>();
+            ParticleSystemRenderer? karveRightSplash = Utils.FindChild(karve.transform, "RightSplash")?.GetComponent<ParticleSystemRenderer>();
+            ParticleSystemRenderer? karveLeftSplash = Utils.FindChild(karve.transform, "LeftSplash")?.GetComponent<ParticleSystemRenderer>();
+            ParticleSystemRenderer? karveRudder = Utils.FindChild(karve.transform, "rudder")?.GetComponent<ParticleSystemRenderer>();
+            ParticleSystemRenderer? karveVfx_WaterImpact = null;
+            ParticleSystemRenderer? karveVfx_Place = null;
+            for(int i = 0; i < karveShip.m_waterImpactEffect.m_effectPrefabs.Length; i++)
+            {
+                if(karveShip.m_waterImpactEffect.m_effectPrefabs[i].m_prefab.TryGetComponent(out ParticleSystemRenderer karveVfx_WaterImpact1))
+                    karveVfx_WaterImpact = karveVfx_WaterImpact1;
+            }
+            for(int i = 0; i < karvePiece.m_placeEffect.m_effectPrefabs.Length; i++)
+            {
+                if(karvePiece.m_placeEffect.m_effectPrefabs[i].m_prefab.TryGetComponent(out ParticleSystemRenderer karveVfx_Place1))
+                    karveVfx_Place = karveVfx_Place1;
+            }
+
+            for(int i = 0; i < _ships.Count; i++)
+            {
+                GameObject currentShip = _ships[i];
+                Ship currentShipShipCmp = currentShip.GetComponent<Ship>();
+                Piece currentShipPiece = currentShip.GetComponent<Piece>();
+                MeshRenderer? waternmask = Utils.FindChild(currentShip.transform, "watermask_waternmask")?.GetComponent<MeshRenderer>();
+                ParticleSystemRenderer? vfx_water_surface = Utils.FindChild(currentShip.transform, "vfx_water_surface")?.GetComponent<ParticleSystemRenderer>();
+                ParticleSystemRenderer? front_particles = Utils.FindChild(currentShip.transform, "front_particles")?.GetComponent<ParticleSystemRenderer>();
+                ParticleSystemRenderer? trail = Utils.FindChild(currentShip.transform, "Trail")?.GetComponent<ParticleSystemRenderer>();
+                ParticleSystemRenderer? rightSplash = Utils.FindChild(currentShip.transform, "RightSplash")?.GetComponent<ParticleSystemRenderer>();
+                ParticleSystemRenderer? leftSplash = Utils.FindChild(currentShip.transform, "LeftSplash")?.GetComponent<ParticleSystemRenderer>();
+                ParticleSystemRenderer? rudder = Utils.FindChild(currentShip.transform, "rudder")?.GetComponent<ParticleSystemRenderer>();
+                ParticleSystemRenderer? vfx_WaterImpact = null;
+                ParticleSystemRenderer? vfx_Place = null;
+                for(int ii = 0; ii < currentShipShipCmp.m_waterImpactEffect.m_effectPrefabs.Length; ii++)
+                {
+                    if(currentShipShipCmp.m_waterImpactEffect.m_effectPrefabs[ii].m_prefab.TryGetComponent(out ParticleSystemRenderer vfx_WaterImpact1))
+                        vfx_WaterImpact = vfx_WaterImpact1;
+                }
+                for(int ii = 0; ii < currentShipPiece.m_placeEffect.m_effectPrefabs.Length; ii++)
+                {
+                    if(currentShipPiece.m_placeEffect.m_effectPrefabs[ii].m_prefab.TryGetComponent(out ParticleSystemRenderer vfx_Place1))
+                        vfx_Place = vfx_Place1;
+                }
+
+#pragma warning disable CS8602
+                if(waternmask)
+                {
+                    waternmask.material.shader = Shader.Find("Custom/WaterMask");
+                    if(ShipFixingDebuging) Debug.Log($"Fixing waternmask in {currentShip.name}");
+                }
+                if(vfx_water_surface && karveVfx_water_surface)
+                {
+                    vfx_water_surface.materials = karveVfx_water_surface.materials;
+                    if(ShipFixingDebuging) Debug.Log($"Fixing vfx_water_surface in {currentShip.name}");
+                }
+                if(front_particles && karveFront_particles)
+                {
+                    front_particles.materials = karveFront_particles.materials;
+                    if(ShipFixingDebuging) Debug.Log($"Fixing front_particles in {currentShip.name}");
+                }
+                if(trail && karveTrail)
+                {
+                    trail.materials = karveTrail.materials;
+                    if(ShipFixingDebuging) Debug.Log($"Fixing trail in {currentShip.name}");
+                }
+                if(rightSplash && karveRightSplash)
+                {
+                    rightSplash.materials = karveRightSplash.materials;
+                    if(ShipFixingDebuging) Debug.Log($"Fixing rightSplash in {currentShip.name}");
+                }
+                if(leftSplash && karveLeftSplash)
+                {
+                    leftSplash.materials = karveLeftSplash.materials;
+                    if(ShipFixingDebuging) Debug.Log($"Fixing leftSplash in {currentShip.name}");
+                }
+                if(rudder && karveRudder)
+                {
+                    rudder.materials = karveRudder.materials;
+                    if(ShipFixingDebuging) Debug.Log($"Fixing rudder in {currentShip.name}");
+                }
+                if(vfx_WaterImpact && karveVfx_WaterImpact)
+                {
+                    vfx_WaterImpact.materials = karveVfx_WaterImpact.materials;
+                    Debug.Log($"Fixing vfx_WaterImpact in {currentShip.name}");
+                }
+                if(vfx_Place && karveVfx_Place)
+                {
+                    vfx_Place.materials = karveVfx_Place.materials;
+                    if(ShipFixingDebuging) Debug.Log($"Fixingv fx_Place in {currentShip.name}");
+                }
+#pragma warning restore CS8602
+            }
+        }
+
+
         [HarmonyPriority(Priority.VeryHigh)]
         private static void SmokeFix(Smoke __instance)
         {
-            if(fixSmoke) __instance.GetComponent<Renderer>().material.shader = Shader.Find("Custom/LitParticles");
+            if(FixSmoke) __instance.GetComponent<Renderer>().material.shader = Shader.Find("Custom/LitParticles");
         }
 
         public enum ShaderType
@@ -178,7 +332,6 @@ namespace ParticleReplacerManager
             AlphaParticle,
             LitParticles,
             ParticleDecal,
-            ShadowBlob,
             LuxLitParticlesBumped,
             LuxLitParticlesTessBumped,
             UseUnityShader
