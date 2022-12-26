@@ -2,12 +2,12 @@
 
 [![Github All Releases](https://img.shields.io/github/downloads/FroggerHH/ParticleReplacerManager/total.svg)]()
 
-Just a Frogger manager that easily solves problems with particle materials
+Just a Frogger manager that easily solves problems with particle materials<br>
 
 Allows you to easily fix the shaders of particle systems.<br>
 It also automatically repairs the smoke shader by setting the shader of all objects using the Smoke.cs script to Custom/Lit.<br>
 You can easily disable this function by writing this line: ```ParticleReplacer.fixSmoke = false;```<br>
-It also has a function for very easy correction of ship effects in 1 line - See example.
+It also has a function for very easy correction of ship effects in 1 line - See example.<br>
 The manager also has documentation for each function and each variable used there. To see it, you need to add ```ParticleReplacerManager.pdb``` and ```ParticleReplacerManager.xml``` files to your project.<br>
 ![example](images/exaple.png) <br>
 
